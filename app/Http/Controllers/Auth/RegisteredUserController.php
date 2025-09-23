@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Auth;
 
+use Barryvdh\Debugbar\Facades\Debugbar;
+
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
@@ -11,6 +13,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
+
+use Illuminate\Support\Facades\DB;
+
+
+
+
+
 
 class RegisteredUserController extends Controller
 {
@@ -35,13 +44,38 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+
+
+
+        $usuarios = DB::table('users')
+                            ->select(DB::raw('*'))
+                             ->limit(1)
+                               ->get();
+
+       DebugBar::info($usuarios->count());
+
+     // Valida si es el primer registro de la tabla para marcarlo como ADMIN, el resto sera como usuario
+
+        if($usuarios->count()>0){
+            $admin=false;
+        } else {
+            $admin=true;
+        }
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'is_admin' => $admin,
             'password' => Hash::make($request->password),
         ]);
 
+        DebugBar::info($user);
+
+
+
+
         event(new Registered($user));
+
 
         Auth::login($user);
 
