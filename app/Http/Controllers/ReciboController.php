@@ -13,6 +13,12 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use NumberFormatter;
 
+        use Mike42\Escpos\Printer;
+        use Mike42\Escpos\PrintConnectors\WindowsPrintConnector;
+        use Mike42\Escpos\PrintConnectors\FilePrintConnector;
+
+
+
 class ReciboController extends Controller
 {
     /**
@@ -188,6 +194,7 @@ class ReciboController extends Controller
         session()->flash('status','¡Recibo grabado con éxito!');
         // Redirigir a la impresión del ticket
         return redirect()->route('recibos.print', ['id' => $recibo->id, 'reimpresion' => 0]);
+
     }
 
 
@@ -196,17 +203,133 @@ class ReciboController extends Controller
 
       // dd($reimpresion);
 
-        $recibo = Recibo::with('asociado')->findOrFail($id);
-        $general = General::first();
+      //  $recibo = Recibo::with('asociado')->findOrFail($id);
+      //  $general = General::first();
 
         $esReimpresion = $reimpresion ? true : false;
 
         // Convertir importe a letras
+     //   $formatter = new NumberFormatter("es", NumberFormatter::SPELLOUT);
+   //     $importeLetras = ucfirst($formatter->format($recibo->importe));
+      //  return view('recibos.print', compact('recibo', 'general', 'importeLetras', 'esReimpresion'));
+
+
+            $recibo = Recibo::findOrFail($id);
+            $asociado = Asociado::where('matricula', $recibo->matricula)->first();
+            $general = General::first();
+
         $formatter = new NumberFormatter("es", NumberFormatter::SPELLOUT);
         $importeLetras = ucfirst($formatter->format($recibo->importe));
 
-        return view('recibos.print', compact('recibo', 'general', 'importeLetras', 'esReimpresion'));
+
+            try {
+                // 🔹 Intentamos impresión ESC/POS
+                if (class_exists(\Mike42\Escpos\Printer::class)) {
+                    $this->printEscPos($recibo, $asociado, $general, $importeLetras, $esReimpresion);
+                    return redirect()->route('asociados.index')->with('success', 'Recibo impreso en ticketera.');
+                } else {
+                    // 🔹 Si no existe la librería, fallback a HTML
+                    return view('recibos.print-html', 
+                        compact('recibo', 'asociado', 'general', 'importeLetras', 'esReimpresion'));
+                }
+            } catch (\Exception $e) {
+                // 🔹 Si falla ESC/POS, fallback a HTML
+                return view('recibos.print-html', compact('recibo', 'asociado', 'general'))
+                    ->with('error', "Fallo impresión en ticketera: " . $e->getMessage());
+            }
+
+
     }
+
+
+    // public function print2(Recibo $recibo)
+    // {
+    //     $asociado = Asociado::where('matricula', $recibo->matricula)->firstOrFail();
+    //     $general  = General::firstOrFail();
+
+    //     return view('recibos.print-ticket-80mm', compact(
+    //         'recibo',
+    //         'asociado',
+    //         'general'
+    //     ));
+    // }
+
+
+
+        // public function printTicket($id)
+        // {
+        //     $recibo = Recibo::findOrFail($id);
+        //     $asociado = Asociado::where('matricula', $recibo->matricula)->first();
+        //     $general = General::first();
+
+        //     try {
+        //         // 🔹 Intentamos impresión ESC/POS
+        //         if (class_exists(\Mike42\Escpos\Printer::class)) {
+        //             $this->printEscPos($recibo, $asociado, $general);
+        //             return redirect()->route('asociados.index')->with('success', 'Recibo impreso en ticketera.');
+        //         } else {
+        //             // 🔹 Si no existe la librería, fallback a HTML
+        //             return view('recibos.print-html', compact('recibo', 'asociado', 'general'));
+        //         }
+        //     } catch (\Exception $e) {
+        //         // 🔹 Si falla ESC/POS, fallback a HTML
+        //         return view('recibos.print-html', compact('recibo', 'asociado', 'general'))
+        //             ->with('error', "Fallo impresión en ticketera: " . $e->getMessage());
+        //     }
+        // }
+
+
+
+        /**
+        * 🔹 Impresión directa con ESC/POS
+        */
+        private function printEscPos($recibo, $asociado, $general,  $importeLetras, $esReimpresion)
+        {
+
+
+        // Cambia el nombre según tu impresora compartida en Windows
+        $connector = new WindowsPrintConnector("POS-58"); 
+        // En Linux: $connector = new FilePrintConnector("/dev/usb/lp0");
+
+        $printer = new Printer($connector);
+
+        // Encabezado
+        $printer->setJustification(Printer::JUSTIFY_CENTER);
+        $printer->setTextSize(2, 2);
+        $printer->text($general->asociacion . "\n");
+        $printer->setTextSize(1, 1);
+        $printer->text("Presidente: " . $general->presidente . "\n");
+        $printer->text("--------------------------------\n");
+
+        // Datos recibo
+        $printer->setJustification(Printer::JUSTIFY_LEFT);
+        $printer->text("Recibo No: " . $recibo->id . "\n");
+        $printer->text("Fecha: " . Carbon::parse($recibo->fecha)->format('d/m/Y') . "\n");
+        $printer->text("Asociado: " . $asociado->nombre . "\n");
+        $printer->text("Matrícula: " . $asociado->matricula . "\n");
+        $printer->text("Importe: $" . number_format($recibo->importe, 2) . "\n");
+        $printer->text("Son " . $importeLetras . "\n");
+
+        if ($recibo->cancelado) {
+            $printer->setJustification(Printer::JUSTIFY_CENTER);
+            $printer->setEmphasis(true);
+            $printer->text("*** CANCELADO ***\n");
+            $printer->setEmphasis(false);
+        }
+
+        $printer->text("--------------------------------\n");
+        $printer->setJustification(Printer::JUSTIFY_CENTER);
+        $printer->text("¡Gracias por su aportación!\n");
+
+        // Espacios + corte automático
+        $printer->feed(4);
+        $printer->cut();
+
+        $printer->close();
+        }
+
+
+
 
     /**
      * Display the specified resource.

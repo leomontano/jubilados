@@ -65,6 +65,9 @@
                     <td class="border border-gray-300 px-4 py-2">
                         {{ $recibo->created_at }}
                     </td>
+
+
+
                     <td class="border border-gray-300 px-4 py-2">
                         @if ( $recibo->matricula )
                             <a href="{{ route('recibomatricula', $recibo->matricula) }}"
@@ -90,6 +93,10 @@
                             {{ $recibo->cancelado === 1 ? 'Cancelado' : '' }}
                         @endif
                     </td>
+
+
+
+
                     <td class="border border-gray-300 px-4 py-2 text-center">
                        {{-- Verificar si es del mes y año actual y si no está cancelado --}}
 
@@ -129,6 +136,15 @@
                             </div>
                         @endif
                     </td>
+
+
+{{--                     <td>
+                        <a href="{{ route('recibos.printTicket', $recibo->id) }}" 
+   class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+   🖨️ Imprimir Ticket</a>
+
+                    </td> --}}
+
                 </tr>
             @empty
                 <tr>

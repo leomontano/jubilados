@@ -40,12 +40,21 @@ Route::get('recibo/{matricula}', [ReciboController::class,'indexmatricula'])->na
 Route::get('/recibos/create/{matricula}', [ReciboController::class, 'create'])->name('recibos.create');
 Route::post('/recibos/store', [ReciboController::class, 'store'])->name('recibos.store');
 Route::get('/recibos/print/{id}/{reimpresion}', [ReciboController::class, 'print'])->name('recibos.print');
+
+
+
+
 Route::delete('/recibos/{id}', [ReciboController::class, 'destroy'])->name('recibos.destroy');
 
 
 Route::get('/corte', [CorteController::class, 'index'])->name('corte.index');
 Route::get('/corte/print', [CorteController::class, 'print'])->name('corte.print');
 Route::get('/corte/print-detalle', [CorteController::class, 'printDetalle'])->name('corte.printDetalle');
+// Route::get('/recibos/{id}/print-ticket', [ReciboController::class, 'printTicket'])->name('recibos.printTicket');
+
+// Route::get('/recibos/{recibo}/print2', [ReciboController::class, 'print2'])->name('recibos.print2');
+
+
 
 Route::get('asistencia', [AsistenciaController::class,'index'])->name('asistencia');
 Route::get('/asistencias/reporte/{anio}', [AsistenciaController::class, 'reporte'])
