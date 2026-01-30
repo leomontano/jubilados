@@ -37,7 +37,7 @@
             @else
                 @foreach($asociados as $asociado)
                     <tr>
-                        <td class="px-4 py-2 border text-left">{{ $asociado->nombre }}</td>
+                        <td class="px-4 py-2 border text-left">{{ $asociado->nombre . ' ' . $asociado->apellido }}</td>
                         @for ($m = 1; $m <= 12; $m++)
                             @php
                                 $asistio = $asistenciaMatrix[$asociado->matricula][$m] ?? false;

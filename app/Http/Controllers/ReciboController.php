@@ -134,7 +134,7 @@ class ReciboController extends Controller
     {
         $request->validate([
             'matricula' => 'required|exists:asociados,matricula',
-            'importe'   => 'required|numeric|min:1',
+            'importe'   => 'required|numeric|min:0',
             'asistio'   => 'required|boolean',
         ], [
             'matricula.exists' => 'Error! No encontré la matrícula.',
@@ -143,36 +143,40 @@ class ReciboController extends Controller
         ]);
 
 
-      //  $aniomes = Carbon::now()->format('Ym');
-        $aniomes = date("Ym");
- 
-         // Control de folio desde la tabla generals
-        $general = General::first();
-        // dd('anomes:',$aniomes,$general->aniomes);
-        if( $aniomes < $general->aniomes ){
-            session()->flash('status','¡Error en control de folios, año y mes! ¡Recibo NO Grabado!, revisar fecha de computadora o reportar a administrador');
-            return redirect()->route('recibomatricula', $request->matricula);
-        }
 
-        if( $aniomes === $general->aniomes ) {
-            $general->foliomes = $general->foliomes + 1;
-        } else {
-            $general->foliomes = 1;
-            $general->aniomes = $aniomes;
-        }
-        $general->folio = $general->folio + 1;
-        // Crear recibo
-        $recibo = new Recibo();
-        $recibo->matricula = $request->matricula;
-        $recibo->importe   = $request->importe;
-        $recibo->foliomes  = $general->foliomes;
-        $recibo->folio     = $general->folio;
-        $recibo->aniomes   = $aniomes;
-        $recibo->asistio   = $request->asistio;
-        $recibo->matricula_a = $request->matricula;
-        $recibo->save();
+        if($request->importe > 0) {
 
-        $general->save();
+          //  $aniomes = Carbon::now()->format('Ym');
+            $aniomes = date("Ym");
+     
+             // Control de folio desde la tabla generals
+            $general = General::first();
+            // dd('anomes:',$aniomes,$general->aniomes);
+            if( $aniomes < $general->aniomes ){
+                session()->flash('status','¡Error en control de folios, año y mes! ¡Recibo NO Grabado!, revisar fecha de computadora o reportar a administrador');
+                return redirect()->route('recibomatricula', $request->matricula);
+            }
+
+            if( $aniomes === $general->aniomes ) {
+                $general->foliomes = $general->foliomes + 1;
+            } else {
+                $general->foliomes = 1;
+                $general->aniomes = $aniomes;
+            }
+            $general->folio = $general->folio + 1;
+            // Crear recibo
+            $recibo = new Recibo();
+            $recibo->matricula = $request->matricula;
+            $recibo->importe   = $request->importe;
+            $recibo->foliomes  = $general->foliomes;
+            $recibo->folio     = $general->folio;
+            $recibo->aniomes   = $aniomes;
+            $recibo->asistio   = $request->asistio;
+            $recibo->matricula_a = $request->matricula;
+            $recibo->save();
+
+            $general->save();
+        }
 
 
 // grabado la asistencia
@@ -190,6 +194,23 @@ class ReciboController extends Controller
                 $asistencia->save();
             }
         }
+
+
+
+// grabado Solo la asistencia
+
+        if($request->asistio and $request->solo_asistencia == 1 and  $request->importe == 0) {
+            return redirect()
+                    ->route('asociados.index')
+                    ->with('success', 'Asistencia registrada correctamente');
+        }
+
+        if(! $request->asistio and $request->solo_asistencia == 0 and  $request->importe == 0) {
+            return redirect()
+                    ->route('asociados.index')
+                    ->with('success', 'No se realizó ninguna acción');
+        }
+
 
         session()->flash('status','¡Recibo grabado con éxito!');
         // Redirigir a la impresión del ticket
