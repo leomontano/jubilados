@@ -38,38 +38,38 @@ class AsociadoController extends Controller
             'apellido.regex' => 'Escribe al menos 2 letras para el apellido.',
 
         ]);
-        debug('Request:', $request);
+     //   debug('Request:', $request);
         $page = $request->query('page');
-        debug('page:', $page);
-        debug('Request route:', $request->fullUrl());
+       // debug('page:', $page);
+      //  debug('Request route:', $request->fullUrl());
         switch (true) {
             case $request->matricula:
                 $asociados = Asociado::where('matricula', $request->matricula)->get();
                 break;
             case ($request->nombre and $request->apellido):
                  $asociados = Asociado::where('nombre', $request->nombre)->Where('apellido', $request->apellido)->get();
-                 debug('asociados nombre y apellido:', $asociados);
+               //  debug('asociados nombre y apellido:', $asociados);
                  if ($asociados->isEmpty()) {
                      $asociados = Asociado::where('nombre', 'like', "%{$request->nombre}%")
                          ->Where('apellido', 'like', "%{$request->apellido}%")
                          ->get();
-                    debug('asociados segundo:', $asociados);
+                  //  debug('asociados segundo:', $asociados);
                  }
                  break;
             case ($request->nombre):
                  $asociados = Asociado::where('nombre', $request->nombre)->get();
-                 debug('asociados solo nombre:', $asociados);
+               //  debug('asociados solo nombre:', $asociados);
                  if ($asociados->isEmpty()) {
                      $asociados = Asociado::where('nombre', 'like', "%{$request->nombre}%")->get();
-                    debug('asociados solo nombre:', $asociados);
+                 //   debug('asociados solo nombre:', $asociados);
                  }
                  break;
             case ($request->apellido):
                  $asociados = Asociado::where('apellido', $request->apellido)->get();
-                 debug('asociados solo apellido:', $asociados);
+              //   debug('asociados solo apellido:', $asociados);
                  if ($asociados->isEmpty()) {
                      $asociados = Asociado::where('apellido', 'like', "%{$request->apellido}%")->get();
-                    debug('asociados solo apellido:', $asociados);
+                  //  debug('asociados solo apellido:', $asociados);
                  }
                  break;
             default:
@@ -79,7 +79,7 @@ class AsociadoController extends Controller
       // //  dd($asociados);
       //    debug('asociados:', $asociados);
             if ($asociados->isEmpty()) {
-                debug('status');
+              //  debug('status');
                 session()->flash('status','No encontré registros con los criterios de búsqueda');
             } 
           return view('asociados.index',['asociados' => $asociados]);
@@ -111,7 +111,7 @@ class AsociadoController extends Controller
         }
 
 
-        debug('validar del store:',$validar);
+      //  debug('validar del store:',$validar);
       //  Asociado::create($request->validated());
         Asociado::create($validar);
         session()->flash('status','Registro creado');
