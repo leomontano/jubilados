@@ -222,12 +222,12 @@ class ReciboController extends Controller
     public function print($id, $reimpresion = null)
     {
 
-      // dd($reimpresion);
-
+     
       //  $recibo = Recibo::with('asociado')->findOrFail($id);
       //  $general = General::first();
 
         $esReimpresion = $reimpresion ? true : false;
+       // dd($reimpresion);
 
         // Convertir importe a letras
      //   $formatter = new NumberFormatter("es", NumberFormatter::SPELLOUT);
@@ -246,16 +246,19 @@ class ReciboController extends Controller
             try {
                 // 🔹 Intentamos impresión ESC/POS
                 if (class_exists(\Mike42\Escpos\Printer::class)) {
+                    // dd('Escpos');
                     $this->printEscPos($recibo, $asociado, $general, $importeLetras, $esReimpresion);
                     return redirect()->route('asociados.index')->with('success', 'Recibo impreso en ticketera.');
                 } else {
                     // 🔹 Si no existe la librería, fallback a HTML
+                 //   dd('PRINT');
                     return view('recibos.print-html', 
                         compact('recibo', 'asociado', 'general', 'importeLetras', 'esReimpresion'));
                 }
             } catch (\Exception $e) {
+              //  dd($e);
                 // 🔹 Si falla ESC/POS, fallback a HTML
-                return view('recibos.print-html', compact('recibo', 'asociado', 'general'))
+                return view('recibos.print-html', compact('recibo', 'asociado', 'general', 'importeLetras', 'esReimpresion'))
                     ->with('error', "Fallo impresión en ticketera: " . $e->getMessage());
             }
 
@@ -309,10 +312,14 @@ class ReciboController extends Controller
 
 
         // Cambia el nombre según tu impresora compartida en Windows
-        $connector = new WindowsPrintConnector("POS-58"); 
+        $esReimpresion = $esReimpresion ? true : false;
+        $connector = new WindowsPrintConnector("POS-80");
+        
         // En Linux: $connector = new FilePrintConnector("/dev/usb/lp0");
 
         $printer = new Printer($connector);
+
+
 
         // Encabezado
         $printer->setJustification(Printer::JUSTIFY_CENTER);
@@ -338,6 +345,8 @@ class ReciboController extends Controller
             $printer->setEmphasis(false);
         }
 
+
+
         $printer->text("--------------------------------\n");
         $printer->setJustification(Printer::JUSTIFY_CENTER);
         $printer->text("¡Gracias por su aportación!\n");
@@ -347,6 +356,7 @@ class ReciboController extends Controller
         $printer->cut();
 
         $printer->close();
+       // dd('YA DENTRO DE POS-80'); 
         }
 
 
