@@ -47,6 +47,14 @@ class ReciboController extends Controller
             ->whereYear('created_at', $anio)
             ->where('cancelado', false)
             ->sum('importe');
+
+        $totalRecibos = Recibo::whereMonth('created_at', $mes)
+            ->whereYear('created_at', $anio)
+            ->where('cancelado', false)
+            ->selectRaw('COUNT(*) as totalRecibos')
+            ->first();
+
+
         // $totalCancelado = Recibo::whereMonth('created_at', $mes)
         //     ->whereYear('created_at', $anio)
         //     ->where('cancelado', true)
@@ -60,7 +68,7 @@ class ReciboController extends Controller
 
 
 
-        return view('recibos.index', compact('recibos', 'totalMes', 'cancelados', 'mes', 'anio'));
+        return view('recibos.index', compact('recibos', 'totalMes', 'cancelados', 'mes', 'anio', 'totalRecibos'));
 
         // $hoy = Carbon::now();
 

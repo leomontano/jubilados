@@ -170,6 +170,14 @@
 {{--     <div class="text-right font-bold text-lg">
         Recibos cancelados del mes: ${{ number_format($totalCancelado, 2) }}
     </div> --}}
+
+
+    @if($totalRecibos)
+        <div class="p-4 bg-black-100 border border-black-400 rounded-md text-black-700">
+            <p>📋 Total de recibos: <strong>{{ ($totalRecibos->totalRecibos) }}</strong></p>
+        </div>
+    @endif
+
     @if($cancelados->totalCancelados or $cancelados->sumaCancelados)
         <div class="p-4 bg-red-100 border border-red-400 rounded-md text-red-700">
             <p>📋 Total de recibos cancelados: <strong>{{ $cancelados->totalCancelados }}</strong></p>

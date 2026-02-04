@@ -44,7 +44,7 @@ class CorteController extends Controller
         $totalImporte = $recibos->sum('importe');
         $totalAsistentes = $recibos->where('asistio', true)->count();
 
-        return view('corte.print', compact('general', 'totalImporte', 'totalAsistentes','totalCancelado'));
+        return view('corte.print', compact('general', 'totalImporte', 'totalAsistentes','totalCancelado', 'recibos'));
     }
 
     public function printDetalle()

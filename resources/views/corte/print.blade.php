@@ -52,6 +52,12 @@
            <span class="text-green-600 font-bold">${{ number_format($totalImporte, 2) }}</span>
         </p>
         <p><span class="font-semibold">Asistentes:</span> {{ $totalAsistentes }}</p>
+
+
+        @if ($recibos)
+            <p><span class="font-semibold">Total de Recibos:</span> {{ $recibos->count() }}</p>
+        @endif
+
         @if ($totalCancelado)
             <p><span class="font-semibold">Recibos cancelados:</span> {{ $totalCancelado }}</p>
         @endif
