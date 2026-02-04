@@ -28,7 +28,7 @@ class AsistenciaController extends Controller
         })->get();
 
         // Obtener asistencias del año
-        $asistencias = \App\Models\Asistencia::whereYear('fecha', $anio)->get();
+        $asistencias = \App\Models\Asistencia::whereYear('fecha', $anio)->where('cancelado', false)->get();
 
         // Arreglo [matricula][mes] => true
         $asistenciaMatrix = [];

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 
 use App\Models\General;
 use App\Models\Recibo;
+use App\Models\Asistencia;
 
 class CorteController extends Controller
 {
@@ -33,16 +34,36 @@ class CorteController extends Controller
         $general = General::firstOrFail();
         $aniomes = $general->aniomes;
 
+
+        $anio= substr($aniomes, 0, 4);
+        $mes= substr($aniomes, 4, 2);
+
         $recibos = Recibo::where('aniomes', $aniomes)
             ->where('cancelado', false)
             ->get();
+
+        // $totalRecibos = Recibo::whereMonth('created_at', $mes)
+        //     ->whereYear('created_at', $anio)
+        //     ->where('cancelado', false)
+        //     ->selectRaw('COUNT(*) as totalRecibos')
+        //     ->first();
+
+
 
         $totalCancelado = Recibo::where('aniomes', $aniomes)
             ->where('cancelado', true)
             ->count();
 
         $totalImporte = $recibos->sum('importe');
-        $totalAsistentes = $recibos->where('asistio', true)->count();
+   //     $totalAsistentes = $recibos->where('asistio', true)->count();
+
+        $totalAsistentes = Asistencia::whereMonth('fecha', $mes)
+             ->whereYear('fecha', $anio)
+             ->where('cancelado', false)
+             ->selectRaw('COUNT(*) as totalAsistentes')
+             ->first();
+
+
 
         return view('corte.print', compact('general', 'totalImporte', 'totalAsistentes','totalCancelado', 'recibos'));
     }

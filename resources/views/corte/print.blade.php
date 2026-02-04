@@ -51,7 +51,9 @@
         <p><span class="font-semibold">Total Aportaciones:</span> 
            <span class="text-green-600 font-bold">${{ number_format($totalImporte, 2) }}</span>
         </p>
-        <p><span class="font-semibold">Asistentes:</span> {{ $totalAsistentes }}</p>
+        @if ($totalAsistentes)
+            <p><span class="font-semibold">Asistentes:</span> {{ $totalAsistentes->totalAsistentes }}</p>
+        @endif
 
 
         @if ($recibos)
