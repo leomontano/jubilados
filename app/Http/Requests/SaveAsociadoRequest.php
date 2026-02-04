@@ -38,7 +38,7 @@ class SaveAsociadoRequest extends FormRequest
         $matriculaRule =  ['required','numeric','between:999,2147483647','unique:asociados'];
     }
 
-    debug('reglas de matricula:',$matriculaRule);
+   // debug('reglas de matricula:',$matriculaRule);
 
     
         $reglas= [
@@ -59,7 +59,7 @@ class SaveAsociadoRequest extends FormRequest
           //  'edad_jubilacion' => 'nullable',
             'celular' => 'nullable',
        ];
-        debug('reglas:',$reglas);
+      //  debug('reglas:',$reglas);
        return $reglas;
     }
 
