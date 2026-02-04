@@ -43,7 +43,7 @@
             <span>¿Asistió a la reunión?</span>
 
             <label class="flex items-center space-x-1">
-                <input type="radio" name="asistio" value="1" class="form-radio text-green-600">
+                <input type="radio" name="asistio" value="1" class="form-radio text-green-600" checked>
                 <span>Sí</span>
             </label>
 
