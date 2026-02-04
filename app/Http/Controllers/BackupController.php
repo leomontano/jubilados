@@ -26,7 +26,8 @@ class BackupController extends Controller
             if (!file_exists(storage_path('app/backups'))) {
                 mkdir(storage_path('app/backups'), 0777, true);
             }
-            $mysqldumpPath = "C:\\laragon\\bin\\mysql\\mysql-8.0.30-winx64\\bin\\mysqldump.exe";
+           // $mysqldumpPath = "C:\\laragon\\bin\\mysql\\mysql-8.0.30-winx64\\bin\\mysqldump.exe";
+            $mysqldumpPath =env('MYSQL_BASE_PATH');
             $command = sprintf(
                 $mysqldumpPath . ' -u%s -p%s %s > %s',
                 escapeshellarg(env('DB_USERNAME')),
