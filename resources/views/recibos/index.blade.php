@@ -171,12 +171,19 @@
         Recibos cancelados del mes: ${{ number_format($totalCancelado, 2) }}
     </div> --}}
 
+    <div class="p-4 bg-black-100 border border-black-400 rounded-md text-black-700">
+        @if($totalRecibos)
+                <p>📋 Total de recibos: <strong>{{ ($totalRecibos->totalRecibos) }}</strong></p>
+        @endif
+        @if($cantidadMayoresCuota)
+                <p>📋 Total de recibos con retroactivos: <strong>{{ $cantidadMayoresCuota }}</strong></p>
+        @endif
+        @if($importe_retroactivos)
+                <p>💰 Importe de retroactivos: <strong>$ {{ $importe_retroactivos }}</strong></p>
+        @endif
 
-    @if($totalRecibos)
-        <div class="p-4 bg-black-100 border border-black-400 rounded-md text-black-700">
-            <p>📋 Total de recibos: <strong>{{ ($totalRecibos->totalRecibos) }}</strong></p>
-        </div>
-    @endif
+    </div>
+
 
     @if($cancelados->totalCancelados or $cancelados->sumaCancelados)
         <div class="p-4 bg-red-100 border border-red-400 rounded-md text-red-700">
@@ -184,7 +191,5 @@
             <p>💰 Suma de importes cancelados: <strong>${{ number_format($cancelados->sumaCancelados, 2) }}</strong></p>
         </div>
     @endif
-
-
 </div>
 </x-layout>

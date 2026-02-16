@@ -55,6 +55,8 @@ class ReciboController extends Controller
             ->first();
 
 
+        
+
         // $totalCancelado = Recibo::whereMonth('created_at', $mes)
         //     ->whereYear('created_at', $anio)
         //     ->where('cancelado', true)
@@ -66,9 +68,39 @@ class ReciboController extends Controller
             ->selectRaw('COUNT(*) as totalCancelados, SUM(importe) as sumaCancelados')
             ->first();
 
+// La siguiente rutina es para contar los extemporaneos o extras
+
+        $cuota = General::first()->cuota;
+
+        $aniomes = $anio . str_pad($mes, 2, '0', STR_PAD_LEFT);
+
+        $totales = Recibo::where('aniomes', $aniomes)
+            ->where('cancelado', false)
+            ->selectRaw('SUM(importe) as total')
+            ->groupBy('matricula')
+            ->get();
+
+        $mayoresCuota = $totales->where('total', '>', $cuota);
+
+        $cantidadMayoresCuota = $mayoresCuota->count();
+        $sumaMayoresCuota     = $mayoresCuota->sum('total');
 
 
-        return view('recibos.index', compact('recibos', 'totalMes', 'cancelados', 'mes', 'anio', 'totalRecibos'));
+
+        $importeMasRepetido = Recibo::where('aniomes', $aniomes)
+            ->where('cancelado', false)
+            ->selectRaw('COUNT(*) as total, importe')
+            ->groupBy('importe')
+            ->orderByDesc('total')
+            ->first();
+
+        //    dd($importeMasRepetido);
+        $importe_retroactivos=$sumaMayoresCuota - ($importeMasRepetido->importe * $cantidadMayoresCuota);
+
+
+
+
+        return view('recibos.index', compact('recibos', 'totalMes', 'cancelados', 'mes', 'anio', 'totalRecibos','cantidadMayoresCuota','sumaMayoresCuota','importeMasRepetido','importe_retroactivos'));
 
         // $hoy = Carbon::now();
 
@@ -119,6 +151,16 @@ class ReciboController extends Controller
     public function create(Request $request)
     {
 
+        if($request->input('mes') and $request->input('anio')) {
+            $mes = $request->input('mes', Carbon::now()->month);
+            $anio = $request->input('anio', Carbon::now()->year);
+        } else {
+            $hoy = Carbon::now();
+            $mes = $hoy->month;
+            $anio = $hoy->year;
+        }
+
+
         // Asociado
         $asociado = Asociado::where('matricula', $request->matricula)->firstOrFail();
 
@@ -129,7 +171,7 @@ class ReciboController extends Controller
         $recibo = new Recibo();
         $recibo->matricula = $asociado->matricula;
         $recibo->importe = $general->cuota;
-        return view('recibos.create', compact('asociado', 'recibo'));
+        return view('recibos.create', compact('asociado', 'recibo', 'mes', 'anio'));
 
 
 
