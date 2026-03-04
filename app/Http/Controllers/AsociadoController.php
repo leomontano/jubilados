@@ -111,9 +111,18 @@ class AsociadoController extends Controller
         }
 
 
+        $validar['nombre'] = $this->quitarAcentos($validar['nombre']);
+        $validar['apellido'] = $this->quitarAcentos($validar['apellido']);
+
+        $validar['nombre'] = strtoupper($validar['nombre']);
+        $validar['apellido'] = strtoupper($validar['apellido']);
+
+
       //  debug('validar del store:',$validar);
       //  Asociado::create($request->validated());
         Asociado::create($validar);
+
+
         session()->flash('status','Registro creado');
         return to_route('asociados.index');
     }
@@ -160,6 +169,14 @@ class AsociadoController extends Controller
         // debug('asociado:',$asociado->toArray());
         // debug('asociado id:',$asociado->id);
 
+        $validar['nombre'] = $this->quitarAcentos($validar['nombre']);
+        $validar['apellido'] = $this->quitarAcentos($validar['apellido']);
+
+        $validar['nombre'] = strtoupper($validar['nombre']);
+        $validar['apellido'] = strtoupper($validar['apellido']);
+
+     //   dd($validar);
+
 
         $asociado = Asociado::find($asociado->id);
         $asociado->update($validar);
@@ -177,4 +194,24 @@ class AsociadoController extends Controller
         $asociado->delete();
         return to_route('asociados.index')->with('status','Registro eliminado');
     }
+
+
+    public function quitarAcentos($texto) {
+        $buscar = array('Á','À','Ä','Â','á','à','ä','â',
+                        'É','È','Ë','Ê','é','è','ë','ê',
+                        'Í','Ì','Ï','Î','í','ì','ï','î',
+                        'Ó','Ò','Ö','Ô','ó','ò','ö','ô',
+                        'Ú','Ù','Ü','Û','ú','ù','ü','û',
+                        'Ñ','ñ');
+                        
+        $reemplazar = array('A','A','A','A','a','a','a','a',
+                            'E','E','E','E','e','e','e','e',
+                            'I','I','I','I','i','i','i','i',
+                            'O','O','O','O','o','o','o','o',
+                            'U','U','U','U','u','u','u','u',
+                            'N','n');
+
+        return str_replace($buscar, $reemplazar, $texto);
+    }
+
 }

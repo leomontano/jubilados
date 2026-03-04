@@ -16,7 +16,6 @@ class Asociado extends Model
     protected $fillable = ['matricula','nombre','apellido','puesto','sexo','fecha_nacimiento','fecha_jubilacion','celular','edad','edad_jubilacion'];
 
 
-
     public function recibos() : hasMany {
         return $this->hasMany(Recibo::class, 'matricula', 'matricula');
     }
