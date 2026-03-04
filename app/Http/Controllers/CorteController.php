@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\General;
 use App\Models\Recibo;
 use App\Models\Asistencia;
+use App\Http\Controllers\ReciboController;
+
 
 class CorteController extends Controller
 {
@@ -20,11 +22,9 @@ class CorteController extends Controller
         $recibos = Recibo::where('aniomes', $aniomes)
             ->where('cancelado', false)
             ->get();
-
         $totalImporte = $recibos->where('cancelado', 0)->sum('importe');
         $totalAsistentes = $recibos->where('asistio', true)->where('cancelado', true)->count();
         $totalCancelado = $recibos->where('cancelado', false)->count();
-
         return view('corte.index', compact('general', 'totalImporte', 'totalAsistentes', 'totalCancelado'));
     }
 
@@ -34,13 +34,15 @@ class CorteController extends Controller
         $general = General::firstOrFail();
         $aniomes = $general->aniomes;
 
+        $reciboController = new ReciboController();
+        $resultados=$reciboController->resumenRecibos($aniomes);
 
         $anio= substr($aniomes, 0, 4);
         $mes= substr($aniomes, 4, 2);
 
-        $recibos = Recibo::where('aniomes', $aniomes)
-            ->where('cancelado', false)
-            ->get();
+        // $recibos = Recibo::where('aniomes', $aniomes)
+        //     ->where('cancelado', false)
+        //     ->get();
 
         // $totalRecibos = Recibo::whereMonth('created_at', $mes)
         //     ->whereYear('created_at', $anio)
@@ -54,8 +56,6 @@ class CorteController extends Controller
             ->where('cancelado', true)
             ->count();
 
-        $totalImporte = $recibos->sum('importe');
-   //     $totalAsistentes = $recibos->where('asistio', true)->count();
 
         $totalAsistentes = Asistencia::whereMonth('fecha', $mes)
              ->whereYear('fecha', $anio)
@@ -65,7 +65,7 @@ class CorteController extends Controller
 
 
 
-        return view('corte.print', compact('general', 'totalImporte', 'totalAsistentes','totalCancelado', 'recibos'));
+        return view('corte.print', compact('general', 'totalAsistentes','totalCancelado', 'resultados'));
     }
 
     public function printDetalle()

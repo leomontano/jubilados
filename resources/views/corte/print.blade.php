@@ -33,6 +33,28 @@
 
 
 </head>
+
+    @php
+        $total_mesT=0;
+        $numero_recibosT=0;
+        $personasT=0;
+        $importe_retroactivos=0;
+        $personas_con_retroactivos=0;
+        $cuotames=0;
+        foreach ($resultados as $resultado) {
+            if($cuotames==0){
+                $cuotames=$resultado->total_por_matricula;
+            } else {
+                $importe_retroactivos+= ($resultado->total_por_matricula-$cuotames )* $resultado->personas;
+                $personas_con_retroactivos+=$resultado->personas;
+            }
+            $total_mesT+=$resultado->total_mes;
+            $numero_recibosT+=$resultado->numero_recibos;
+            $personasT+=$resultado->personas;
+        }
+        $aportacionesdelmes=$total_mesT-$importe_retroactivos;
+    @endphp 
+
 <body onload="window.print(); window.onafterprint = function(){ window.location.href='{{ route('asociados.index') }}'; }">
     <div class="w-72 mx-auto text-center font-mono text-sm">
 
@@ -48,18 +70,29 @@
         <div class="border-t border-dashed border-gray-700 my-2"></div>
 
         <p><span class="font-semibold">Corte del Mes:</span> {{ $general->aniomes }}</p>
-        <p><span class="font-semibold">Total Aportaciones:</span> 
-           <span class="text-green-600 font-bold">${{ number_format($totalImporte, 2) }}</span>
+
+        <p><span class="font-semibold">Personas que aportaron mes actual:</span> 
+           <span class="text-green-600 font-bold">{{ number_format($personasT) }}</span>
         </p>
+        <p><span class="font-semibold">personas que dieron retroactivo:</span> 
+           <span class="text-green-600 font-bold">{{ number_format($personas_con_retroactivos) }}</span>
+        </p>
+
+        <p><span class="font-semibold">Aportaciones del mes actual:</span> 
+           <span class="text-green-600 font-bold">${{ number_format($total_mesT - $importe_retroactivos) }}</span>
+        </p>
+        <p><span class="font-semibold">Importe de retroactivos:</span> 
+           <span class="text-green-600 font-bold">${{ number_format($importe_retroactivos) }}</span>
+        </p>
+
+        <p><span class="font-semibold">Total de aportaciones:</span> 
+           <span class="text-green-600 font-bold">${{ number_format($total_mesT) }}</span>
+        </p>
+
+
         @if ($totalAsistentes)
             <p><span class="font-semibold">Asistentes:</span> {{ $totalAsistentes->totalAsistentes }}</p>
         @endif
-
-
-        @if ($recibos)
-            <p><span class="font-semibold">Total de Recibos:</span> {{ $recibos->count() }}</p>
-        @endif
-
         @if ($totalCancelado)
             <p><span class="font-semibold">Recibos cancelados:</span> {{ $totalCancelado }}</p>
         @endif

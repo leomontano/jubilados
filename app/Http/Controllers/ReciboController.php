@@ -5,6 +5,7 @@ use App\Models\Recibo;
 use App\Models\Asociado;
 use App\Models\General;
 use App\Models\Asistencia;
+use Illuminate\Support\Facades\DB;
 
 
 use Barryvdh\Debugbar\Facades\Debugbar;
@@ -35,6 +36,21 @@ class ReciboController extends Controller
             $mes = $hoy->month;
             $anio = $hoy->year;
         }
+        $general = General::first();
+        $cuota = $general->cuota;
+        $aniomes = $anio . str_pad($mes, 2, '0', STR_PAD_LEFT);
+        if($aniomes>$general->aniomes){
+            $aniomes=$general->aniomes;
+            $mes = substr($aniomes,4,2);
+            $anio = substr($aniomes,0,4);
+        }
+
+        $fechaString = $anio.'-'.$mes.'-01';
+
+        $fecha = Carbon::parse($fechaString);
+        $fecha->locale('es');
+
+        $nombremes = $fecha->translatedFormat('F Y'); // marzo
 
         $recibos = Recibo::with('asociado')
             ->whereMonth('created_at', $mes)
@@ -43,19 +59,38 @@ class ReciboController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        $totalMes = Recibo::whereMonth('created_at', $mes)
-            ->whereYear('created_at', $anio)
-            ->where('cancelado', false)
-            ->sum('importe');
+// para el resumen total
 
-        $totalRecibos = Recibo::whereMonth('created_at', $mes)
-            ->whereYear('created_at', $anio)
-            ->where('cancelado', false)
-            ->selectRaw('COUNT(*) as totalRecibos')
-            ->first();
+    // Subconsulta
+        $subtotales = DB::table('recibos')
+            ->select(
+                'aniomes',
+                'matricula',
+                DB::raw('SUM(importe) as total_por_matricula'),
+                DB::raw('COUNT(*) as numero_recibos')
+            )
+            ->where('cancelado', 0)
+            ->where('aniomes',$aniomes)
+            ->groupBy('aniomes', 'matricula');
 
-
-        
+        // Consulta principal
+        $resultados = DB::query()
+            ->fromSub($subtotales, 'subtotales')
+            ->select(
+                'aniomes',
+                'total_por_matricula',
+                DB::raw('SUM(total_por_matricula) as total_mes'),
+                DB::raw('SUM(numero_recibos) as numero_recibos'),
+                DB::raw('COUNT(*) as personas')
+            )
+            ->groupBy('aniomes', 'total_por_matricula')
+            ->orderBy('aniomes')
+            ->orderBy('total_por_matricula')
+            ->get();
+       // dd($resultados);
+            $resultados=$this->resumenRecibos($aniomes);
+          //  dd($resultados);
+    
 
         // $totalCancelado = Recibo::whereMonth('created_at', $mes)
         //     ->whereYear('created_at', $anio)
@@ -67,61 +102,41 @@ class ReciboController extends Controller
             ->whereYear('created_at', $anio)        
             ->selectRaw('COUNT(*) as totalCancelados, SUM(importe) as sumaCancelados')
             ->first();
-
-// La siguiente rutina es para contar los extemporaneos o extras
-
-        $cuota = General::first()->cuota;
-
-        $aniomes = $anio . str_pad($mes, 2, '0', STR_PAD_LEFT);
-
-        $totales = Recibo::where('aniomes', $aniomes)
-            ->where('cancelado', false)
-            ->selectRaw('SUM(importe) as total')
-            ->groupBy('matricula')
-            ->get();
-
-        $mayoresCuota = $totales->where('total', '>', $cuota);
-
-        $cantidadMayoresCuota = $mayoresCuota->count();
-        $sumaMayoresCuota     = $mayoresCuota->sum('total');
-
-
-
-        $importeMasRepetido = Recibo::where('aniomes', $aniomes)
-            ->where('cancelado', false)
-            ->selectRaw('COUNT(*) as total, importe')
-            ->groupBy('importe')
-            ->orderByDesc('total')
-            ->first();
-
-        //    dd($importeMasRepetido);
-        $importe_retroactivos=$sumaMayoresCuota - ($importeMasRepetido->importe * $cantidadMayoresCuota);
-
-
-
-
-        return view('recibos.index', compact('recibos', 'totalMes', 'cancelados', 'mes', 'anio', 'totalRecibos','cantidadMayoresCuota','sumaMayoresCuota','importeMasRepetido','importe_retroactivos'));
-
-        // $hoy = Carbon::now();
-
-        // // Filtrar recibos del mes actual y unir con asociados
-        // $recibos = Recibo::with('asociado')
-        //     ->whereMonth('created_at', $hoy->month)
-        //     ->whereYear('created_at', $hoy->year)
-        //     ->where('cancelado', false)
-        //     ->orderBy('created_at', 'desc')
-        //     ->paginate(5); // 👈 Paginación de 15 en 15
-
-        // // Total general del mes actual
-        // $totalMes = Recibo::whereMonth('created_at', $hoy->month)
-        //     ->whereYear('created_at', $hoy->year)
-        //     ->sum('importe');
-
-        // return view('recibos.index', compact('recibos', 'totalMes'));
-     //   return view('recibos.index',['recibos', 'totalMes']);
+   
+        return view('recibos.index', compact('recibos', 'cancelados', 'mes', 'anio', 'nombremes','resultados','cuota'));
     }
 
+    public function resumenRecibos($aniomes)
+    {
+    // Subconsulta
+        $subtotales = DB::table('recibos')
+            ->select(
+                'aniomes',
+                'matricula',
+                DB::raw('SUM(importe) as total_por_matricula'),
+                DB::raw('COUNT(*) as numero_recibos')
+            )
+            ->where('cancelado', 0)
+            ->where('aniomes',$aniomes)
+            ->groupBy('aniomes', 'matricula');
 
+        // Consulta principal
+        $resultados = DB::query()
+            ->fromSub($subtotales, 'subtotales')
+            ->select(
+                'aniomes',
+                'total_por_matricula',
+                DB::raw('SUM(total_por_matricula) as total_mes'),
+                DB::raw('SUM(numero_recibos) as numero_recibos'),
+                DB::raw('COUNT(*) as personas')
+            )
+            ->groupBy('aniomes', 'total_por_matricula')
+            ->orderBy('aniomes')
+            ->orderBy('total_por_matricula')
+            ->get();
+
+        return $resultados;
+    }
 
     public function indexmatricula($matricula)
     {

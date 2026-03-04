@@ -35,9 +35,29 @@
         </div>
     </form>
 
+    @php
+        $total_mesT=0;
+        $numero_recibosT=0;
+        $personasT=0;
+        $importe_retroactivos=0;
+        $personas_con_retroactivos=0;
+        $cuotames=0;
+        foreach ($resultados as $resultado) {
+            if($cuotames==0){
+                $cuotames=$resultado->total_por_matricula;
+            } else {
+                $importe_retroactivos+= ($resultado->total_por_matricula-$cuotames )* $resultado->personas;
+                $personas_con_retroactivos+=$resultado->personas;
+            }
+            $total_mesT+=$resultado->total_mes;
+            $numero_recibosT+=$resultado->numero_recibos;
+            $personasT+=$resultado->personas;
+        }
+        $aportacionesdelmes=$total_mesT-$importe_retroactivos;
+    @endphp 
 
     <h2 class="text-2xl font-bold mb-4">
-        Recibos del mes de {{ \Carbon\Carbon::now()->translatedFormat('F Y') }}
+        Recibos del mes de {{ $nombremes }}
     </h2>
 
     <table class="w-full border-collapse border border-gray-300 mb-4">
@@ -48,9 +68,7 @@
                 <th class="border border-gray-300 px-4 py-2">Matrícula</th>
                 <th class="border border-gray-300 px-4 py-2">Nombre</th>
                 <th class="border border-gray-300 px-4 py-2 text-right">Importe</th>
-                <th colspan="2" class="border border-gray-300 px-4 py-2 text-center">
-                               Acción
-                            </th>
+                <th colspan="2" class="border border-gray-300 px-4 py-2 text-center">Acción</th>
 
             </tr>
         </thead>
@@ -93,10 +111,6 @@
                             {{ $recibo->cancelado === 1 ? 'Cancelado' : '' }}
                         @endif
                     </td>
-
-
-
-
                     <td class="border border-gray-300 px-4 py-2 text-center">
                        {{-- Verificar si es del mes y año actual y si no está cancelado --}}
 
@@ -155,7 +169,7 @@
             <tr>
                 <td></td><td></td><td></td>
                 <td>Total del mes:</td>
-                <td class="text-right font-bold text-lg">${{ number_format($totalMes, 2) }}</td>
+                <td class="text-right font-bold text-lg">${{ number_format($total_mesT, 2) }}</td>
             </tr>
 
         </tbody>
@@ -167,29 +181,73 @@
     </div>
 
 
-{{--     <div class="text-right font-bold text-lg">
-        Recibos cancelados del mes: ${{ number_format($totalCancelado, 2) }}
-    </div> --}}
-
-    <div class="p-4 bg-black-100 border border-black-400 rounded-md text-black-700">
-        @if($totalRecibos)
-                <p>📋 Total de recibos: <strong>{{ ($totalRecibos->totalRecibos) }}</strong></p>
-        @endif
-        @if($cantidadMayoresCuota)
-                <p>📋 Total de recibos con retroactivos: <strong>{{ $cantidadMayoresCuota }}</strong></p>
-        @endif
-        @if($importe_retroactivos)
-                <p>💰 Importe de retroactivos: <strong>$ {{ $importe_retroactivos }}</strong></p>
-        @endif
-
-    </div>
-
-
     @if($cancelados->totalCancelados or $cancelados->sumaCancelados)
         <div class="p-4 bg-red-100 border border-red-400 rounded-md text-red-700">
             <p>📋 Total de recibos cancelados: <strong>{{ $cancelados->totalCancelados }}</strong></p>
             <p>💰 Suma de importes cancelados: <strong>${{ number_format($cancelados->sumaCancelados, 2) }}</strong></p>
         </div>
     @endif
+
+    <div class="p-4 bg-black-100 border border-black-400 rounded-md text-black-700">
+        @if($numero_recibosT)
+                <p>📋 Total de recibos: <strong>{{ ($numero_recibosT) }}</strong></p>
+        @endif
+
+        @if($personasT)
+                <p>📋 Personas que aportaron: <strong>{{ ($personasT) }}</strong></p>
+        @endif
+
+        @if($personas_con_retroactivos)
+                <p>📋 Total de personas que dieron retroactivo: <strong>{{ $personas_con_retroactivos }}</strong></p>
+        @endif
+
+        @if($total_mesT)
+                <p>💰 Aportaciones del mes: <strong>$ {{ number_format($total_mesT - $importe_retroactivos) }}</strong></p>
+        @endif
+
+        @if($importe_retroactivos)
+                <p>💰 Importe de retroactivos: <strong>$ {{ number_format($importe_retroactivos) }}</strong></p>
+        @endif
+
+        @if($total_mesT)
+                <p>💰 Suma de aportaciones: <strong>$ {{ number_format($total_mesT) }}</strong></p>
+        @endif
+    </div>
+
+
+<div class="p-4 bg-black-100 border border-black-400 rounded-md text-black-700">
+    <table class="w-full border-collapse border border-gray-300 mb-4">
+        <thead>
+            <tr class="bg-gray-100 text-left">
+                <th class="border border-gray-300 px-4 py-2 text-center">Cuota</th>
+                <th class="border border-gray-300 px-4 py-2 text-center">💰 Suma</th>
+                <th class="border border-gray-300 px-4 py-2 text-center">📋 No. Recibos</th>
+                <th class="border border-gray-300 px-4 py-2 text-center">📋 No. Personas</th>
+            </tr>
+        </thead>
+        <tbody>
+
+            @forelse($resultados as $resultado)
+                <tr class="hover:bg-gray-100">
+                    <td class="border border-gray-300 px-4 py-2 text-center">${{ $resultado->total_por_matricula }}  {{ $resultado->total_por_matricula > $cuota ? '( Con Retroactivo)' : '' }}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-right">${{ number_format($resultado->total_mes) }}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-center">{{ $resultado->numero_recibos }}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-center">{{ $resultado->personas }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="5" class="text-center py-4">No hay recibos este mes</td>
+                </tr>
+            @endforelse
+                                {{-- Totales --}}
+            <tr class="bg-gray-200 font-bold">
+                <td class="px-4 py-2 border text-center">Totales</td>
+                <td class="px-2 py-2 text-center text-right">${{ number_format($total_mesT) }}</td>
+                <td class="px-2 py-2 border text-center">{{ $numero_recibosT }}</td>
+                <td class="px-2 py-2 border text-center">{{ $personasT }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
 </div>
 </x-layout>
