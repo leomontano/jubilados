@@ -7,7 +7,6 @@ use App\Models\General;
 use App\Models\Asistencia;
 use Illuminate\Support\Facades\DB;
 
-
 use Barryvdh\Debugbar\Facades\Debugbar;
 
 use Illuminate\Http\Request;
@@ -474,4 +473,66 @@ class ReciboController extends Controller
         return redirect()->back()->with('status', 'Recibo cancelado correctamente.');
 
     }
+
+    public function ingresosMensuales(Request $request)
+    {
+        $anioActual = Carbon::now()->year;
+
+        $anio = $request->anio ?? $anioActual;
+
+        // validar rango de años
+        if($anio > $anioActual){
+            $anio = $anioActual;
+        }
+
+        if($anio < ($anioActual - 5)){
+            $anio = $anioActual - 5;
+        }
+
+        $datos = DB::table('recibos as r')
+            ->join('asociados as a', 'a.matricula', '=', 'r.matricula')
+            ->select(
+                'r.matricula',
+                DB::raw("CONCAT(a.nombre,' ',a.apellido) as nombre"),
+
+                DB::raw("SUM(CASE WHEN MONTH(r.created_at)=1 THEN r.importe ELSE 0 END) as enero"),
+                DB::raw("SUM(CASE WHEN MONTH(r.created_at)=2 THEN r.importe ELSE 0 END) as febrero"),
+                DB::raw("SUM(CASE WHEN MONTH(r.created_at)=3 THEN r.importe ELSE 0 END) as marzo"),
+                DB::raw("SUM(CASE WHEN MONTH(r.created_at)=4 THEN r.importe ELSE 0 END) as abril"),
+                DB::raw("SUM(CASE WHEN MONTH(r.created_at)=5 THEN r.importe ELSE 0 END) as mayo"),
+                DB::raw("SUM(CASE WHEN MONTH(r.created_at)=6 THEN r.importe ELSE 0 END) as junio"),
+                DB::raw("SUM(CASE WHEN MONTH(r.created_at)=7 THEN r.importe ELSE 0 END) as julio"),
+                DB::raw("SUM(CASE WHEN MONTH(r.created_at)=8 THEN r.importe ELSE 0 END) as agosto"),
+                DB::raw("SUM(CASE WHEN MONTH(r.created_at)=9 THEN r.importe ELSE 0 END) as septiembre"),
+                DB::raw("SUM(CASE WHEN MONTH(r.created_at)=10 THEN r.importe ELSE 0 END) as octubre"),
+                DB::raw("SUM(CASE WHEN MONTH(r.created_at)=11 THEN r.importe ELSE 0 END) as noviembre"),
+                DB::raw("SUM(CASE WHEN MONTH(r.created_at)=12 THEN r.importe ELSE 0 END) as diciembre"),
+
+                DB::raw("SUM(r.importe) as total")
+            )
+            ->whereYear('r.created_at',$anio)
+            ->where('r.cancelado',false)
+            ->groupBy('r.matricula','a.nombre','a.apellido')
+            ->orderBy('r.matricula')
+            ->get();
+        // Totales generales
+        $totales = [
+            'enero' => $datos->sum('enero'),
+            'febrero' => $datos->sum('febrero'),
+            'marzo' => $datos->sum('marzo'),
+            'abril' => $datos->sum('abril'),
+            'mayo' => $datos->sum('mayo'),
+            'junio' => $datos->sum('junio'),
+            'julio' => $datos->sum('julio'),
+            'agosto' => $datos->sum('agosto'),
+            'septiembre' => $datos->sum('septiembre'),
+            'octubre' => $datos->sum('octubre'),
+            'noviembre' => $datos->sum('noviembre'),
+            'diciembre' => $datos->sum('diciembre'),
+            'total' => $datos->sum('total'),
+        ];
+        return view('reportes.ingresos_mensuales',compact('datos','totales','anio','anioActual'));
+    }
+
+
 }

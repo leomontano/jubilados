@@ -99,11 +99,21 @@
             <p>{{ 'Fecha de nacimiento: ' .  $asociado->fecha_nacimiento }}, ( {{ \Carbon\Carbon::parse($asociado->fecha_nacimiento)->age }} años de edad )</p>
             <p>{{ 'Teléfono/celular: ' .  $asociado->celular }}</p>
         </div>
-
+    
         <a href="{{ route('asociados.index') }}" class="mt-6 px-4 py-2 bg-gray-500 text-white rounded-lg 
-          hover:bg-gray-600 mt-4">
+          hover:bg-gray-600 mt-4" class="inline-block">
                     ⬅️ Regresar
         </a>
+
+                <form action="{{ route('asociados.showmatricula', $asociado->matricula) }}" method="GET" class="inline-block px-4">
+                    @csrf
+                    <input type="hidden" name="matricula" value="{{ $asociado->matricula }}">
+                    <button class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-lg shadow flex items-center space-x-2">
+                        <span>
+                            Cambiar matricula
+                        </span>
+                    </button>
+                </form>
 
     </div>
     </div>

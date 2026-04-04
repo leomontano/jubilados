@@ -109,10 +109,65 @@
           href="{{ route('corte.index') }}">Cortes</a>
 
 
+        <div class="relative inline-block text-left">
+
+            <button onclick="toggleReportes()"
+                class="px-4 py-2 rounded shadow hover:bg-blue-700">
+                Reportes
+            </button>
+
+            <div id="menuReportes"
+                 class="hidden absolute mt-2 w-56 bg-white border rounded shadow-lg">
+
+                <a href="{{ route('reportes.ingresos_mensuales') }}"
+                   class="block px-4 py-2 hover:bg-gray-100">
+                    Ingresos
+                </a>
+            </div>
+
+        </div>
+
+
+
+
+
+
+
         <a class="px-3 py-2 {{ request()->routeIs('asistencia.*') ? 'text-sky-500' : 'text-slate-600 transition-colors hover:text-sky-500 dark:text-slate-400 dark:hover:text-sky-500' }}"
           href="{{ route('asistencia') }}">Asistencias</a>
         <a class="px-3 py-2 {{ request()->routeIs('generals.*') ? 'text-sky-500' : 'text-slate-600 transition-colors hover:text-sky-500 dark:text-slate-400 dark:hover:text-sky-500' }}"
           href="{{ route('generals.edit') }}">Generales</a>
+
+        <div class="relative inline-block text-left">
+
+            <button onclick="toggleMenu()"
+                class="px-4 py-2 rounded shadow hover:bg-blue-700">
+                Matrículas
+            </button>
+
+            <div id="menuMatriculas"
+                 class="hidden absolute mt-2 w-56 bg-white border rounded shadow-lg">
+
+                <a href="{{ route('asociados.index') }}"
+                   class="block px-4 py-2 hover:bg-gray-100">
+                    Cambiar matrícula
+                </a>
+
+                <a href="{{ route('historial.matriculas') }}"
+                   class="block px-4 py-2 hover:bg-gray-100">
+                    Historial de cambios
+                </a>
+
+                <a href="{{ route('historial.matriculas') }}"
+                   class="block px-4 py-2 hover:bg-gray-100">
+                    Auditoría completa
+                </a>
+
+            </div>
+
+        </div>
+
+
         <a class="px-3 py-2 {{ request()->routeIs('backup.*') ? 'text-sky-500' : 'text-slate-600 transition-colors hover:text-sky-500 dark:text-slate-400 dark:hover:text-sky-500' }}"
           href="{{ route('backup.index') }}">Respaldo</a>
 
@@ -264,3 +319,20 @@
       class="block rounded-mdpx-3 py-2 {{ request()->routeIs('asistencia.*') ? 'bg-sky-500 text-white' : 'text-slate-700 transition-colors hover:bg-sky-500 hover:text-white dark:text-slate-400 dark:hover:text-white' }} ">Asistencias</a>
   </div>
 </header>
+
+<script>
+
+function toggleMenu()
+{
+    let menu = document.getElementById('menuMatriculas');
+
+    menu.classList.toggle('hidden');
+}
+function toggleReportes()
+{
+    let menu = document.getElementById('menuReportes');
+
+    menu.classList.toggle('hidden');
+}
+
+</script>

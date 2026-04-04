@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Asociado;
+use App\Models\Asistencia;
+use App\Models\Recibo;
+use App\Models\HistorialMatricula;
+
 use App\Http\Requests\SaveAsociadoRequest;
 
 use Barryvdh\Debugbar\Facades\Debugbar;
@@ -138,6 +142,14 @@ class AsociadoController extends Controller
         return view('asociados.show',['asociado' => $asociado]);
     }
 
+
+    public function showmatricula($matricula)
+    {
+        $asociado = Asociado::where('matricula', $matricula)->firstOrFail();
+        return view('asociados.showmatricula', compact('asociado'));
+    }
+
+
     /**
      * Show the form for editing the specified resource.
      */
@@ -213,5 +225,129 @@ class AsociadoController extends Controller
 
         return str_replace($buscar, $reemplazar, $texto);
     }
+
+
+
+
+    // public function cambiarMatricula(Request $request, $matricula)
+    // {
+
+    //     $request->validate([
+    //         'nueva_matricula' => 'required|unique:asociados,matricula'
+    //     ]);
+
+    //     DB::transaction(function () use ($request, $matricula) {
+
+    //         $nueva = $request->nueva_matricula;
+
+    //         // actualizar asociado
+    //         DB::table('asociados')
+    //             ->where('matricula', $matricula)
+    //             ->update(['matricula' => $nueva]);
+
+    //         // actualizar recibos
+    //         DB::table('recibos')
+    //             ->where('matricula', $matricula)
+    //             ->update(['matricula' => $nueva]);
+
+    //         // actualizar asistencias
+    //         DB::table('asistencias')
+    //             ->where('matricula', $matricula)
+    //             ->update(['matricula' => $nueva]);
+
+    //         // guardar historial
+    //         HistorialMatricula::create([
+    //             'matricula_anterior' => $matricula,
+    //             'matricula_nueva' => $nueva,
+    //             'usuario_id' => auth()->id()
+    //         ]);
+
+    //     });
+
+    //     return redirect()->route('asociados.index')
+    //         ->with('success','Matrícula actualizada correctamente');
+
+    // }
+
+
+    public function cambiarMatricula(Request $request)
+    {
+
+        $request->validate([
+            'matricula_actual' => 'required|exists:asociados,matricula',
+            'matricula_nueva' => 'required|numeric|unique:asociados,matricula'
+        ]);
+
+        $actual = $request->matricula_actual;
+        $nueva  = $request->matricula_nueva;
+
+        try {
+
+            // Contar registros antes del cambio
+            $recibosCount = DB::table('recibos')
+                ->where('matricula', $actual)
+                ->count();
+
+            $asistenciasCount = DB::table('asistencias')
+                ->where('matricula', $actual)
+                ->count();
+
+            $asociadoCount = DB::table('asociados')
+                ->where('matricula', $actual)
+                ->count();
+
+            DB::transaction(function () use ($actual, $nueva) {
+
+                $asociado = Asociado::where('matricula', $actual)->firstOrFail();
+
+                $asociado->update([
+                    'matricula' => $nueva
+                ]);
+
+                // guardar historial
+                HistorialMatricula::create([
+                    'matricula_anterior' => $actual,
+                    'matricula_nueva' => $nueva,
+                    'usuario_id' => auth()->id()
+                ]);
+                DB::commit();
+
+            });
+
+            $resultado = [
+                'asociados' => $asociadoCount,
+                'recibos' => $recibosCount,
+                'asistencias' => $asistenciasCount,
+                'mensaje' => 'Cambio realizado correctamente'
+            ];
+
+            return view('asociados.resultado_cambio_matricula', compact('resultado','actual','nueva'));
+
+        } catch (\Exception $e) {
+
+            $resultado = [
+                'asociados' => 0,
+                'recibos' => 0,
+                'asistencias' => 0,
+                'mensaje' => $e->getMessage()
+            ];
+
+            return view('asociados.resultado_cambio_matricula', compact('resultado','actual','nueva'));
+
+        }
+
+    }
+
+
+
+    public function historial()
+    {
+
+        $historial = HistorialMatricula::latest()->paginate(20);
+
+        return view('asociados.historial', compact('historial'));
+
+    }
+
 
 }

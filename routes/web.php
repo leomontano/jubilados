@@ -33,6 +33,22 @@ Route::resource('asociado',AsociadoController::class,[
         'parameters' => [ 'asociado' => 'asociado']
      ]);
 
+// para cambiar matricula
+
+Route::put('/asociados/{matricula}/cambiar-matricula',
+     [AsociadoController::class, 'cambiarMatricula']
+ )->name('asociados.cambiarMatricula');
+
+Route::get('/historial-matriculas',
+    [AsociadoController::class,'historial'])
+    ->name('historial.matriculas');
+
+
+
+// Route::get('/asociados/{matricula}',
+//     [AsociadoController::class, 'showmatricula']
+// )->name('asociados.showmatricula');
+Route::get('asociados/{matricula}', [AsociadoController::class,'showmatricula'])->name('asociados.showmatricula');
 
 Route::get('recibo', [ReciboController::class,'index'])->name('recibo');
 Route::get('recibo/{matricula}', [ReciboController::class,'indexmatricula'])->name('recibomatricula');
@@ -41,6 +57,9 @@ Route::get('/recibos/create/{matricula}', [ReciboController::class, 'create'])->
 Route::post('/recibos/store', [ReciboController::class, 'store'])->name('recibos.store');
 Route::get('/recibos/print/{id}/{reimpresion}', [ReciboController::class, 'print'])->name('recibos.print');
 
+
+Route::get('/reportes/ingresos-mensuales', [ReciboController::class, 'ingresosMensuales']) 
+    ->name('reportes.ingresos_mensuales');
 
 
 
