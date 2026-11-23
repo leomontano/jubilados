@@ -32,4 +32,22 @@ class Asociado extends Model
     {
         return $this->hasMany(Asistencia::class, 'matricula', 'matricula');
     }
+
+    public function nombreFormateado(string $orden = 'apellido'): string
+    {
+        return $orden === 'apellido'
+            ? trim($this->apellido . ' ' . $this->nombre)
+            : trim($this->nombre . ' ' . $this->apellido);
+    }
+
+    public function scopeOrdenarPor($query, string $orden = 'apellido')
+    {
+        return match ($orden) {
+            'matricula' => $query->orderByRaw('CAST(matricula AS UNSIGNED) ASC'),
+            'nombre'    => $query->orderBy('nombre', 'asc')->orderBy('apellido', 'asc'),
+            default     => $query->orderBy('apellido', 'asc')->orderBy('nombre', 'asc'),
+        };
+    }
+
+
 }

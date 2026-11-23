@@ -4,19 +4,35 @@
 <div class="max-w-7xl mx-auto py-6">
     <h1 class="text-2xl font-bold mb-6">📋 Reporte de Asistencias {{ $anio }}</h1>
 
-    {{-- Selector de año --}}
-    <form method="GET" action="{{ route('asistencia') }}" class="mb-4 flex items-center space-x-4">
-        <label for="anio" class="font-semibold">Seleccionar año:</label>
-        <select name="anio" id="anio" class="border rounded px-3 py-1">
-            @foreach($aniosDisponibles as $year)
-                <option value="{{ $year }}" {{ $anio == $year ? 'selected' : '' }}>
-                    {{ $year }}
-                </option>
-            @endforeach
-        </select>
-        <button type="submit" class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700">
+    <form method="GET" action="{{ route('asistencia') }}" class="flex flex-wrap gap-4 items-end mb-6">
+        <div>
+            <label class="block text-sm font-bold mb-1">Año</label>
+            <select name="anio" class="border rounded px-3 py-2">
+                @foreach($aniosDisponibles as $a)
+                    <option value="{{ $a }}" {{ $anio == $a ? 'selected' : '' }}>{{ $a }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-sm font-bold mb-1">Ordenar por</label>
+            <select name="orden" class="border rounded px-3 py-2">
+                <option value="apellido" {{ $orden == 'apellido' ? 'selected' : '' }}>Apellido + Nombre</option>
+                <option value="nombre" {{ $orden == 'nombre' ? 'selected' : '' }}>Nombre + Apellido</option>
+                <option value="matricula" {{ $orden == 'matricula' ? 'selected' : '' }}>Matrícula</option>
+            </select>
+        </div>
+
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">
             Filtrar
         </button>
+
+        {{-- Botón para abrir la vista de impresión conservando el año y el orden --}}
+        <a href="{{ route('asistencias.reporte', ['anio' => $anio, 'orden' => $orden]) }}" 
+           target="_blank" 
+           class="bg-green-600 text-white px-4 py-2 rounded">
+            🖨️ Imprimir Reporte
+        </a>
     </form>
 
     <div class="overflow-x-auto bg-white shadow-md rounded-lg">
@@ -45,7 +61,9 @@
                 @else
                     @foreach($asociados as $asociado)
                         <tr>
-                            <td class="px-4 py-2 border text-left">{{ $asociado->matricula . " " . $asociado->nombre . " " . $asociado->apellido }}</td>
+                            <td class="px-4 py-2 border text-left">{{ $asociado->matricula}}</td>
+                            <td class="px-4 py-2 border text-left">
+                                {{ $asociado->nombreFormateado($orden) }}</td>
                             @for ($m = 1; $m <= 12; $m++)
                                 @php
                                     $asistio = $asistenciaMatrix[$asociado->matricula][$m] ?? false;

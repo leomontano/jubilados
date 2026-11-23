@@ -2,7 +2,7 @@
 
 	<div class="p-6">
 
-	<div class="flex justify-between items-center mb-4">
+	<div class="flex justify-between items-center mb-4 no-print">
 
 	<h1 class="text-2xl font-bold">
 	Reporte de Ingresos por Mes - {{$anio}}
@@ -15,23 +15,47 @@
 
 	</div>
 
-	<form method="GET" class="mb-4">
+	<form method="GET" action="{{ route('reportes.ingresos_mensuales') }}" class="flex flex-wrap gap-4 items-end mb-4 no-print">
+	    <div>
+	        <label class="block text-sm font-bold mb-1">Año</label>
+	        <select name="anio" class="border rounded px-3 py-2">
+	            @for ($a = $anioActual; $a >= $anioActual - 5; $a--)
+	                <option value="{{ $a }}" {{ $anio == $a ? 'selected' : '' }}>{{ $a }}</option>
+	            @endfor
+	        </select>
+	    </div>
 
-	<select name="anio"
-	class="border rounded px-3 py-2"
-	onchange="this.form.submit()">
+	    <div>
+	        <label class="block text-sm font-bold mb-1">Ordenar por</label>
+	        <select name="orden" class="border rounded px-3 py-2">
+	            <option value="apellido" {{ $orden == 'apellido' ? 'selected' : '' }}>Apellido + Nombre</option>
+	            <option value="nombre" {{ $orden == 'nombre' ? 'selected' : '' }}>Nombre + Apellido</option>
+	            <option value="matricula" {{ $orden == 'matricula' ? 'selected' : '' }}>Matrícula</option>
+	        </select>
+	    </div>
 
-	@for($i=$anioActual; $i>=($anioActual-5); $i--)
-
-	<option value="{{$i}}" {{$anio==$i?'selected':''}}>
-	{{$i}}
-	</option>
-
-	@endfor
-
-	</select>
-
+	    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">
+	        Filtrar
+	    </button>
 	</form>
+
+	<div class="mb-4 text-center">
+	    @if($asociacion)
+	        <h2 class="text-base font-bold">{{ $asociacion }}</h2>
+	    @endif
+	    <h3 class="text-base font-bold">
+	        Reporte de Ingresos Mensuales - Año {{ $anio }}
+	    </h3>
+	    <p class="text-xs text-gray-600 mt-1">
+	        Ordenado por: 
+	        <strong>
+	            @if($orden === 'matricula') Matrícula
+	            @elseif($orden === 'nombre') Nombre + Apellido
+	            @else Apellido + Nombre
+	            @endif
+	        </strong>
+	    </p>
+	</div>
 
 
 	<div class="overflow-x-auto">
@@ -42,6 +66,7 @@
 
 	<tr>
 
+	<th class="border px-2">#</th>
 	<th class="border px-2">Matricula</th>
 	<th class="border px-2">Nombre</th>
 
@@ -60,8 +85,6 @@
 	<th class="border px-2">Nov</th>
 	<th class="border px-2">Dic</th>
 
-	
-
 	</tr>
 
 	</thead>
@@ -72,6 +95,7 @@
 
 	<tr class="text-center">
 
+	<td class="border px-2 text-gray-600">{{ $loop->iteration }}</td>
 	<td class="border px-2">{{$d->matricula}}</td>
 	<td class="border px-2 text-left">{{$d->nombre}}</td>
 
@@ -90,19 +114,18 @@
 	<td class="border">{{$d->noviembre}}</td>
 	<td class="border">{{$d->diciembre}}</td>
 
-	
-
 	</tr>
 
 	@endforeach
 
+	</tbody>
 
 	<tfoot class="bg-gray-300 font-bold text-center">
 
 	<tr>
 
-	<td colspan="2" class="border px-2 text-right">
-	TOTAL GENERAL
+	<td colspan="3" class="border px-2 text-right">
+	TOTAL GENERAL ({{ $datos->count() }} asociados)
 	</td>
 	<td class="border">{{number_format($totales['total'])}}</td>
 	<td class="border">{{number_format($totales['enero'])}}</td>
@@ -118,15 +141,9 @@
 	<td class="border">{{number_format($totales['noviembre'])}}</td>
 	<td class="border">{{number_format($totales['diciembre'])}}</td>
 
-	
-
 	</tr>
 
 	</tfoot>
-
-
-
-	</tbody>
 
 	</table>
 
@@ -139,8 +156,8 @@
 
 	@media print{
 
-	button, select{
-	display:none;
+	.no-print, button, select{
+	display:none !important;
 	}
 
 	body{

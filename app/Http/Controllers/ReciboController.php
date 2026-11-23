@@ -474,26 +474,32 @@ class ReciboController extends Controller
 
     }
 
-    public function ingresosMensuales(Request $request)
+public function ingresosMensuales(Request $request)
     {
         $anioActual = Carbon::now()->year;
-
         $anio = $request->anio ?? $anioActual;
+        $orden = $request->get('orden', 'apellido'); // 'apellido', 'nombre', 'matricula'
 
         // validar rango de años
-        if($anio > $anioActual){
+        if ($anio > $anioActual) {
             $anio = $anioActual;
         }
 
-        if($anio < ($anioActual - 5)){
+        if ($anio < ($anioActual - 5)) {
             $anio = $anioActual - 5;
         }
 
-        $datos = DB::table('recibos as r')
+        // Formatear el nombre en SQL según el orden elegido:
+        // Si es 'apellido', va Apellido + Nombre; de lo contrario, Nombre + Apellido
+        $campoNombre = $orden === 'apellido'
+            ? "CONCAT(a.apellido, ' ', a.nombre) as nombre"
+            : "CONCAT(a.nombre, ' ', a.apellido) as nombre";
+
+        $query = DB::table('recibos as r')
             ->join('asociados as a', 'a.matricula', '=', 'r.matricula')
             ->select(
                 'r.matricula',
-                DB::raw("CONCAT(a.nombre,' ',a.apellido) as nombre"),
+                DB::raw($campoNombre),
 
                 DB::raw("SUM(CASE WHEN MONTH(r.created_at)=1 THEN r.importe ELSE 0 END) as enero"),
                 DB::raw("SUM(CASE WHEN MONTH(r.created_at)=2 THEN r.importe ELSE 0 END) as febrero"),
@@ -510,29 +516,47 @@ class ReciboController extends Controller
 
                 DB::raw("SUM(r.importe) as total")
             )
-            ->whereYear('r.created_at',$anio)
-            ->where('r.cancelado',false)
-            ->groupBy('r.matricula','a.nombre','a.apellido')
-            ->orderBy('r.matricula')
-            ->get();
+            ->whereYear('r.created_at', $anio)
+            ->where('r.cancelado', false)
+            ->groupBy('r.matricula', 'a.nombre', 'a.apellido');
+
+        // Aplicar el ordenamiento elegido
+        match ($orden) {
+            'matricula' => $query->orderByRaw('CAST(r.matricula AS UNSIGNED) ASC'),
+            'nombre'    => $query->orderBy('a.nombre', 'asc')->orderBy('a.apellido', 'asc'),
+            default     => $query->orderBy('a.apellido', 'asc')->orderBy('a.nombre', 'asc'),
+        };
+
+        $datos = $query->get();
+
         // Totales generales
         $totales = [
-            'enero' => $datos->sum('enero'),
-            'febrero' => $datos->sum('febrero'),
-            'marzo' => $datos->sum('marzo'),
-            'abril' => $datos->sum('abril'),
-            'mayo' => $datos->sum('mayo'),
-            'junio' => $datos->sum('junio'),
-            'julio' => $datos->sum('julio'),
-            'agosto' => $datos->sum('agosto'),
+            'enero'      => $datos->sum('enero'),
+            'febrero'    => $datos->sum('febrero'),
+            'marzo'      => $datos->sum('marzo'),
+            'abril'      => $datos->sum('abril'),
+            'mayo'       => $datos->sum('mayo'),
+            'junio'      => $datos->sum('junio'),
+            'julio'      => $datos->sum('julio'),
+            'agosto'     => $datos->sum('agosto'),
             'septiembre' => $datos->sum('septiembre'),
-            'octubre' => $datos->sum('octubre'),
-            'noviembre' => $datos->sum('noviembre'),
-            'diciembre' => $datos->sum('diciembre'),
-            'total' => $datos->sum('total'),
+            'octubre'    => $datos->sum('octubre'),
+            'noviembre'  => $datos->sum('noviembre'),
+            'diciembre'  => $datos->sum('diciembre'),
+            'total'      => $datos->sum('total'),
         ];
-        return view('reportes.ingresos_mensuales',compact('datos','totales','anio','anioActual'));
+
+
+        $general = General::first();
+                $asociacion = $general && $general->asociacion ? $general->asociacion : '';
+
+        return view('reportes.ingresos_mensuales', compact(
+                    'datos', 
+                    'totales', 
+                    'anio', 
+                    'anioActual', 
+                    'orden', 
+                    'asociacion'
+                ));
     }
-
-
 }
